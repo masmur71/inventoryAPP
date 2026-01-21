@@ -17,7 +17,32 @@ app.use(cors()); // Enable CORS
 app.use(helmet()); // Security Headers
 app.use(morgan('dev')); // HTTP Request Logger
 
-// Basic Health Check Route
+/**
+ * @openapi
+ * /:
+ *   get:
+ *     tags:
+ *       - Health Check
+ *     summary: Cek status server
+ *     description: Endpoint sederhana untuk memastikan API berjalan dengan normal.
+ *     responses:
+ *       200:
+ *         description: Server is operational
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Enterprise Inventory System API is running
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ */
 app.get('/', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'success',
@@ -25,6 +50,7 @@ app.get('/', (req: Request, res: Response) => {
     timestamp: new Date().toISOString()
   });
 });
+// Routes
 
 
 app.use('/api/auth', authRoutes);
