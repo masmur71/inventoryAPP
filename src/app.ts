@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import authRoutes from './modules/auth/auth.routes.js';
 import inventoryRoutes from './modules/inventory/inventory.routes.js';
+import orderRoutes from './modules/orders/order.routes.js';
 import { errorHandler } from './common/middleware/errorHandler.js';
 
 const app: Application = express();
@@ -28,6 +29,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/orders', orderRoutes);
 
 
 //Global Error Handler
