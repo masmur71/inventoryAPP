@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Schema untuk Membuat Gudang
+// create warehouse schema
 export const createWarehouseSchema = z.object({
   body: z.object({
     code: z.string().min(3).max(10),
@@ -10,7 +10,7 @@ export const createWarehouseSchema = z.object({
   }),
 });
 
-// Schema untuk Membuat Produk
+// create product schema
 export const createProductSchema = z.object({
   body: z.object({
     sku: z.string().min(3),
@@ -21,7 +21,7 @@ export const createProductSchema = z.object({
   }),
 });
 
-// Schema untuk Stock Opname / Penyesuaian Stok
+// stock adjustment schema
 export const adjustStockSchema = z.object({
   body: z.object({
     productId: z.string(),

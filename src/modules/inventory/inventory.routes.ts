@@ -6,7 +6,7 @@ import { createProductSchema, createWarehouseSchema, adjustStockSchema } from '.
 
 const router = Router();
 
-// Semua route di bawah butuh login
+//all routes here are protected
 router.use(authenticate);
 
 // Warehouses

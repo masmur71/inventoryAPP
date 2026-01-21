@@ -33,7 +33,7 @@ export class InventoryController {
 
   static async adjustStock(req: Request, res: Response, next: NextFunction) {
     try {
-      // Ambil userId dari token (via authMiddleware)
+      // useId from token(via authMiddleware)
       const userId = req.user.userId;
       
       const result = await InventoryService.adjustStock({

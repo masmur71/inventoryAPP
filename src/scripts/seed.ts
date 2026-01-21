@@ -17,7 +17,7 @@ const seedData = async () => {
     for (const roleName of roles) {
       const exists = await Role.findOne({ name: roleName });
       if (!exists) {
-        // Tentukan permission dasar (bisa diedit nanti)
+        // basic permissions setup
         const permissions = roleName === 'admin' 
           ? ['all'] 
           : ['inventory.view', 'order.create'];
@@ -48,7 +48,7 @@ const seedData = async () => {
       }
     }
 
-    logger.info('🌱 Seeding completed successfully');
+    logger.info('✅ Seeding completed successfully');
     process.exit(0);
   } catch (error) {
     logger.error('❌ Seeding failed:', error);

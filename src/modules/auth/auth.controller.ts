@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth.service.js';
 
 export class AuthController {
@@ -20,9 +20,17 @@ export class AuthController {
     }
   }
 
+  static async refreshToken(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { refreshToken } = req.body;
+      const result = await AuthService.refreshToken(refreshToken);
+      res.status(200).json({ status: 'success', data: result });
+    } catch (error) { next(error); }
+  }
+
   static async logout(req: Request, res: Response, next: NextFunction) {
     try {
-        // Ambil token dari header & body
+        // token from header & body
         const accessToken = req.headers.authorization?.split(' ')[1] || '';
         const { refreshToken } = req.body;
         

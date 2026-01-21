@@ -4,7 +4,7 @@ export interface IUser extends Document {
   fullName: string;
   email: string;
   passwordHash: string;
-  role: mongoose.Types.ObjectId; // Referensi ke Role
+  role: mongoose.Types.ObjectId; // Referenrence to Role
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

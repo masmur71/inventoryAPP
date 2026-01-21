@@ -62,7 +62,7 @@ export class AuthService {
 
   // --- NEW: Refresh Token Logic ---
   static async refreshToken(token: string) {
-    // 1. Cek apakah token ada di blacklist (Logout)
+    // 1. Check Blacklist
     const isBlacklisted = await redis.get(`bl_${token}`);
     if (isBlacklisted) throw new AppError('Refresh token revoked', 401);
 
@@ -78,13 +78,13 @@ export class AuthService {
     const payload = { userId: user._id.toString(), role: (user.role as any).name };
     const newAccessToken = signAccessToken(payload);
 
-    // Optional: Kita bisa juga merotasi refresh token disini agar lebih aman
+  
     
     return { accessToken: newAccessToken };
   }
 
   static async logout(accessToken: string, refreshToken: string) {
-    // Blacklist sisa umur token
+    // Blacklist tokens
     // Access token (15m), Refresh token (7d)
     if (accessToken) await redis.set(`bl_${accessToken}`, 'true', 'EX', 15 * 60); 
     if (refreshToken) await redis.set(`bl_${refreshToken}`, 'true', 'EX', 7 * 24 * 60 * 60);
