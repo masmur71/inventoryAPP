@@ -1,0 +1,184 @@
+🗺️ Roadmap Fase Pengerjaan (Tanpa Code)
+Fase 1: Perancangan Arsitektur & Desain Database (Selesai)
+
+Menentukan struktur folder berbasis fitur (Modular).
+
+Merancang skema database MongoDB (Pemisahan entitas Produk, Stok, dan Gudang).
+
+Menentukan strategi relasi antar data untuk skalabilitas.
+
+Fase 2: Setup Environment & Infrastruktur (Selesai)
+
+Inisialisasi project dengan TypeScript (ESM NodeNext).
+
+Konfigurasi docker-compose untuk Database & Redis.
+
+Setup koneksi database, logger, dan validasi variabel environment (.env).
+
+Fase 3: Implementasi Model Database (Schema Implementation)
+
+Menerjemahkan desain database menjadi Schema Mongoose yang nyata.
+
+Membuat Model untuk Users & Roles.
+
+Membuat Model untuk Warehouses & Products.
+
+Membuat Model untuk Stocks (Pivot table yang menghubungkan produk & gudang).
+
+Membuat Model untuk Orders & Mutations (Log perubahan stok).
+
+Checkpoint: Seluruh struktur data siap digunakan dan memiliki validasi tipe data di level database.
+
+Fase 4: Core Security & Authentication
+
+Implementasi logika registrasi dan hashing password.
+
+Pembuatan sistem Token (JWT Access & Refresh Token).
+
+Integrasi Redis untuk mekanisme Logout (Blacklist Token).
+
+Pembuatan Middleware untuk validasi Token.
+
+Pembuatan Middleware RBAC (Role-Based Access Control) untuk membatasi hak akses pengguna secara spesifik.
+
+Fase 5: Logika Bisnis Inventaris (Inventory Domain)
+
+Pembuatan logika CRUD untuk Master Data (Produk & Gudang).
+
+Implementasi logika Mutasi Stok: Penambahan, Pengurangan, dan Transfer stok antar gudang.
+
+Penerapan aturan bisnis: Stok tidak boleh diedit langsung, harus melalui fungsi "Adjustment" agar tercatat sejarahnya.
+
+Fase 6: Transaksi & Konkurensi (Order Domain)
+
+Implementasi alur pembuatan Order.
+
+Penerapan Database Transactions (ACID): Memastikan Order tersimpan dan Stok terpotong secara bersamaan (atomik).
+
+Penerapan Redis Distributed Lock: Mencegah race condition (dua user membeli barang terakhir di detik yang sama).
+
+Logika pembatalan order (Restock otomatis).
+
+Fase 7: Quality Assurance (Testing)
+
+Setup framework testing (Jest & Supertest).
+
+Pembuatan Integration Test untuk skenario kritis (Flow Login -> Order -> Cek Stok).
+
+Memastikan sistem menangani error dengan benar (misal: stok kurang).
+
+Fase 8: User Interface (Frontend Admin)
+
+Setup project Vercel dengan EJS, Tailwind CSS, dan Alpine.js.
+
+Integrasi halaman Login & Dashboard.
+
+Integrasi visualisasi data stok dan manajemen order sederhana.
+
+Fase 9: Deployment & CI/CD
+
+Pembuatan Dockerfile Multi-stage untuk Backend.
+
+Setup pipeline GitHub Actions (Auto Test & Build).
+
+Deploy Backend ke Railway.
+
+Deploy Frontend ke Vercel.
+
+
+
+-----------------------------------
+Mongo data
+
+Sebelum coding Model Mongoose, kita harus sepakat dulu isinya. Berikut adalah spesifikasi field yang harus ada.
+
+A. Module: Auth & Users
+1. Role Schema
+
+Tujuannya agar hak akses dinamis.
+
+Fields:
+
+name: String (Unique, misal: "admin", "staff_gudang").
+
+permissions: Array of String (misal: ["inventory.view", "order.create"]).
+
+2. User Schema
+
+Fields:
+
+email: String (Unique, Indexed).
+
+password: String (Hashed).
+
+fullName: String.
+
+role: ObjectId (Ref ke Role).
+
+isActive: Boolean (Default: true).
+
+B. Module: Inventory (Inti Sistem)
+3. Warehouse Schema
+
+Fields:
+
+code: String (Unique, misal: "WH-JKT-01").
+
+name: String.
+
+address: String.
+
+4. Product Schema (Hanya Data Master)
+
+Fields:
+
+sku: String (Unique, Indexed. Stock Keeping Unit).
+
+name: String.
+
+price: Number.
+
+tags: Array of String (untuk filtering).
+
+isDeleted: Boolean (Soft delete).
+
+5. Stock Schema (PENTING)
+
+Ini tabel pivot yang menyimpan jumlah barang.
+
+Fields:
+
+product: ObjectId (Ref ke Product).
+
+warehouse: ObjectId (Ref ke Warehouse).
+
+quantity: Number (Default: 0, Min: 0).
+
+lowStockThreshold: Number (Batas minimal untuk alert).
+
+Index Strategy: Buat Compound Unique Index pada { product: 1, warehouse: 1 }.
+
+Kenapa? Mencegah duplikasi data stok untuk produk yang sama di gudang yang sama.
+
+C. Module: Orders
+6. Order Schema
+
+Fields:
+
+orderNumber: String (Unique, auto-generated).
+
+status: Enum (PENDING, PROCESSED, SHIPPED, CANCELLED).
+
+items: Array of Objects. PENTING: Jangan cuma simpan ProductID. Simpan "Snapshot" data saat itu.
+
+productId: Ref.
+
+productName: String (Snapshot).
+
+priceAtPurchase: Number (Snapshot - karena harga master bisa berubah).
+
+qty: Number.
+
+totalAmount: Number.
+
+customerName: String.
