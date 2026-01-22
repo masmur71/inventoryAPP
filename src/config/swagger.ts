@@ -34,10 +34,13 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  // --- BAGIAN KRUSIAL ---
-  // Gunakan './src/...' dengan garis miring biasa (Forward Slash).
-  // Jangan pakai path.join() di sini agar tidak diubah jadi Backslash oleh Windows.
-  apis: ['./src/app.ts', './src/modules/**/*.routes.ts'], 
+
+  apis: [// Saat dev: baca src/**/*.ts
+    './src/modules/**/*.routes.ts', 
+    './src/modules/**/*.schema.ts',
+    // Saat di Docker/Production: baca dist/**/*.js
+    './dist/modules/**/*.routes.js',
+    './dist/modules/**/*.schema.js'], 
 };
 
 const swaggerSpec: OpenAPIV3.Document = swaggerJsdoc(options) as OpenAPIV3.Document;
