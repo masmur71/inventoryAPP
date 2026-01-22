@@ -3,6 +3,7 @@ import  { verifyAccessToken } from '../utils/jwt.js';
 import  type { TokenPayload } from '../utils/jwt.js'; 
 import redis from '../../config/redis.js';
 import { AppError } from '../utils/AppError.js';
+import type { Permission } from '../types/permissions.js';
 import { User } from '../../modules/users/models/user.model.js';
 
 // Extend Express Request Type 
@@ -47,24 +48,40 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 };
 
 // Middleware RBAC (Permission Check)
-export const requirePermission = (requiredPermission: string) => {
+export const requirePermission = (requiredPermissions: Permission | Permission[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // req.user dijamin ada karena middleware ini dipasang SETELAH authenticate
       if (!req.user) throw new AppError('Unauthorized', 401);
 
-      // ambil Role lengkap dari DB untuk cek permission terbaru
-      
-      const user = await User.findById(req.user.userId).populate('role');
-      
-      if (!user || !user.role) {
-        throw new AppError('User role not found', 403);
+      // 1. Normalisasi input jadi Array agar seragam
+      const required = Array.isArray(requiredPermissions) 
+        ? requiredPermissions 
+        : [requiredPermissions];
+
+      // 2. Ambil permission dari Token (req.user) - CEPAT ⚡
+      let userPermissions = req.user.permissions || [];
+
+      // 3. FALLBACK: Jika Token lama (belum ada permission), ambil dari DB - LAMBAT 🐢
+      // Ini menjaga agar user yang tokennya belum expired tidak error tiba-tiba
+      if (userPermissions.length === 0) {
+         const { User } = await import('../../modules/users/models/user.model.js');
+         const user = await User.findById(req.user.userId).populate('role');
+         if (user && user.role) {
+            userPermissions = (user.role as any).permissions;
+         }
       }
 
-      const userRole = user.role as any; // Casting ke Role Model
+      // 4. Logic Pengecekan
+      // Super Admin selalu boleh ('all')
+      if (userPermissions.includes('all')) {
+        return next();
+      }
 
-      if (!userRole.permissions.includes(requiredPermission) && !userRole.permissions.includes('all')) {
-        throw new AppError(`Forbidden: You need permission '${requiredPermission}'`, 403);
+      // Cek apakah punya SALAH SATU permission yang diminta (OR Logic)
+      const hasPermission = required.some(p => userPermissions.includes(p as any));
+
+      if (!hasPermission) {
+        throw new AppError(`Forbidden: You need one of these permissions: [${required.join(', ')}]`, 403);
       }
 
       next();

@@ -1,16 +1,45 @@
 version: '3.8'
+
 services:
-  mongodb:
+  app:
+    build: .
+    container_name: inventory-app
+    ports:
+      - "3000:3000"
+    # --- KUNCI KEAMANAN ---
+
+    env_file:
+      - .env  
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/enterprise_inventory
+      - REDIS_HOST=redis
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - app-network
+
+  mongo:
     image: mongo:latest
-    restart: always
+    container_name: inventory-mongo
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app-network
 
   redis:
     image: redis:alpine
-    restart: always
+    container_name: inventory-redis
     ports:
       - "6379:6379"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo_data:

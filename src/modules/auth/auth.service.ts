@@ -22,7 +22,6 @@ export class AuthService {
   }
 
   // --- NEW: Centralized Token Generation Helper ---
-  // Agar logic inject permission tidak berulang di login & refresh token
   private static generateTokens(user: any) {
     // Pastikan user.role sudah dipopulate sebelum masuk sini
     const roleName = (user.role as any).name;
