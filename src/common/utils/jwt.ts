@@ -6,6 +6,7 @@ import { config } from '../../config/env.js';
 export interface TokenPayload {
   userId: string;
   role: string;
+  permissions: string[];
 }
 
 export const signAccessToken = (payload: TokenPayload) => {

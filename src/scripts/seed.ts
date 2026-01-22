@@ -4,35 +4,65 @@ import { config } from '../config/env.js';
 import { connectDB } from '../config/database.js'; 
 import logger from '../common/utils/logger.js'; 
 
-
 import { Role } from '../modules/users/models/role.model.js'; 
 import { User } from '../modules/users/models/user.model.js'; 
+
+
+import { PERMISSIONS } from '../common/types/permissions.js';
 
 const seedData = async () => {
   try {
     await connectDB();
 
-    // 1. Seed Roles
-    const roles = ['admin', 'manager', 'staff'];
-    for (const roleName of roles) {
-      const exists = await Role.findOne({ name: roleName });
-      if (!exists) {
-        // basic permissions setup
-        const permissions = roleName === 'admin' 
-          ? ['all'] 
-          : ['inventory.view', 'order.create'];
-        
-        await Role.create({ name: roleName, permissions });
-        logger.info(`✅ Role created: ${roleName}`);
+    logger.info('🌱 Starting Seeder...');
+
+    // 1. Definisi Role & Permission 
+    const rolesData = [
+      {
+        name: 'admin',
+        permissions: [PERMISSIONS.ALL], // Admin Sakti
+      },
+      {
+        name: 'manager',
+        permissions: [
+            // Manager bisa melakukan segalanya KECUALI 'all' (delete user, dsb mungkin dibatasi nanti)
+            PERMISSIONS.INVENTORY.VIEW,
+            PERMISSIONS.INVENTORY.MANAGE,
+            PERMISSIONS.STOCK.ADJUST,
+            PERMISSIONS.ORDER.VIEW,
+            PERMISSIONS.ORDER.CREATE
+        ]
+      },
+      {
+        name: 'staff',
+        permissions: [
+            // Staff hanya bisa View Inventory dan Buat Order, tidak bisa Edit Produk Master
+            PERMISSIONS.INVENTORY.VIEW,
+            PERMISSIONS.ORDER.CREATE,
+            PERMISSIONS.ORDER.VIEW,
+            // Opsional: Staff gudang mungkin butuh adjust stock?
+            // PERMISSIONS.STOCK.ADJUST 
+        ]
       }
+    ];
+
+    // 2. Seed Roles (Gunakan findOneAndUpdate agar permission ter-update jika role sudah ada)
+    for (const role of rolesData) {
+      await Role.findOneAndUpdate(
+        { name: role.name },
+        { permissions: role.permissions },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      logger.info(`✅ Role synced: ${role.name}`);
     }
 
-    // 2. Seed Super Admin User
+    // 3. Seed Super Admin User
     const adminRole = await Role.findOne({ name: 'admin' });
     const adminEmail = 'admin@enterprise.com';
     
     if (adminRole) {
       const adminExists = await User.findOne({ email: adminEmail });
+      
       if (!adminExists) {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash('admin123', salt); // Password default
@@ -44,14 +74,16 @@ const seedData = async () => {
           role: adminRole._id,
           isActive: true
         });
-        logger.info(`✅ Super Admin created: ${adminEmail} / admin123`);
+        logger.info(`uper Admin created: ${adminEmail} / admin123`);
+      } else {
+        logger.info(`ℹSuper Admin already exists.`);
       }
     }
 
-    logger.info('✅ Seeding completed successfully');
+    logger.info('Seeding completed successfully');
     process.exit(0);
   } catch (error) {
-    logger.error('❌ Seeding failed:', error);
+    logger.error(' Seeding failed:', error);
     process.exit(1);
   }
 };

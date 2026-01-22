@@ -1,6 +1,7 @@
 import type { Application, Request, Response } from 'express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import type { OpenAPIV3 } from 'openapi-types';
 import pkg from '../../package.json' with { type: 'json' };
 const { version } = pkg;
 
@@ -39,7 +40,8 @@ const options: swaggerJsdoc.Options = {
   apis: ['./src/app.ts', './src/modules/**/*.routes.ts'], 
 };
 
-const swaggerSpec = swaggerJsdoc(options);
+const swaggerSpec: OpenAPIV3.Document = swaggerJsdoc(options) as OpenAPIV3.Document;
+
 
 export const setupSwagger = (app: Application, port: number) => {
   // 1. Setup UI

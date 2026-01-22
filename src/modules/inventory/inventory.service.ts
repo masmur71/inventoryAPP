@@ -10,15 +10,58 @@ export class InventoryService {
   
   // --- Master Data ---
 
+  //WAREHOUSES //
+
   static async createWarehouse(data: any) {
     const exists = await Warehouse.findOne({ code: data.code });
     if (exists) throw new AppError('Warehouse code already exists', 400);
     return await Warehouse.create(data);
   }
 
+  static async getAllWarehouses() {
+    return await Warehouse.find().select('-__v');
+  }
+
+  static async getWarehouseById(id: string) {
+    const warehouse = await Warehouse.findById(id).select('-__v');
+    if (!warehouse) {
+      throw new AppError('Warehouse not found', 404);
+    }
+    return warehouse;
+  }
+
   static async getWarehouses() {
     return await Warehouse.find();
   }
+
+  static async updateWarehouse(id: string, data: any) {
+    const warehouse = await Warehouse.findByIdAndUpdate(id, data, {
+      new: true, // Return data yang sudah diupdate
+      runValidators: true // Jalankan validasi Mongoose schema
+    });
+
+    if (!warehouse) {
+      throw new AppError('Warehouse not found', 404);
+    }
+    return warehouse;
+  }
+
+  static async deleteWarehouse(id: string) {
+    // Opsional: Cek apakah ada stok tersisa sebelum hapus
+    const stockCount = await Stock.countDocuments({ warehouse: id, quantity: { $gt: 0 } });
+    if (stockCount > 0) {
+      throw new AppError('Cannot delete warehouse with active stock', 400);
+    }
+
+    const warehouse = await Warehouse.findByIdAndDelete(id);
+    if (!warehouse) {
+      throw new AppError('Warehouse not found', 404);
+    }
+    return warehouse;
+  }
+
+
+  // PRODUCTS & STOCK //
 
   static async createProduct(data: any) {
     const exists = await Product.findOne({ sku: data.sku });
@@ -29,6 +72,43 @@ export class InventoryService {
   static async getProducts(query: any) {
     return await Product.find({ isDeleted: false });
   }
+
+  static async getAllProducts() {
+    return await Product.find().select('-__v');
+  }
+
+  static async getProductById(id: string) {
+    const product = await Product.findById(id).select('-__v');
+    if (!product) {
+      throw new AppError('Product not found', 404);
+    }
+    return product;
+  }
+
+  static async updateProduct(id: string, data: any) {
+    const product = await Product.findByIdAndUpdate(id, data, {
+      new: true,
+      runValidators: true
+    });
+
+    if (!product) {
+      throw new AppError('Product not found', 404);
+    }
+    return product;
+  }
+
+  static async deleteProduct(id: string) {
+    // Opsional: Cek apakah produk pernah ditransaksikan
+    // const hasTransactions = ... (logic cek order history)
+
+    const product = await Product.findByIdAndDelete(id);
+    if (!product) {
+      throw new AppError('Product not found', 404);
+    }
+    return product;
+  }
+
+  
 
   // --- CORE LOGIC: STOCK MUTATION ---
   

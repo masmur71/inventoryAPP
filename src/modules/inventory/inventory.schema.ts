@@ -31,4 +31,13 @@ export const adjustStockSchema = z.object({
     reason: z.enum(['PURCHASE', 'SALE', 'ADJUSTMENT', 'RETURN']),
     notes: z.string().optional(),
   }),
+
+});
+
+export const updateWarehouseSchema = z.object({
+  body: createWarehouseSchema.shape.body.partial(),
+});
+
+export const updateProductSchema = z.object({
+  body: createProductSchema.shape.body.partial(),
 });

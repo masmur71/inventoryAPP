@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { AuthController } from './auth.controller.js';
 import { authenticate } from '../../common/middleware/auth.middleware.js';
 import { validate } from '../../common/middleware/validate.js';
+import type { Request, Response, NextFunction } from 'express';
 import { 
   loginSchema, 
   registerSchema, 
@@ -89,6 +90,100 @@ router.post('/register', validate(registerSchema), AuthController.register);
  *         description: Email atau password salah
  */
 router.post('/login', validate(loginSchema), AuthController.login);
+
+/**
+ * @openapi
+ * /api/auth/me:
+ *   get:
+ *     tags:
+ *       - Auth
+ *     summary: Cek Profil Saya
+ *     description: Mengambil data user yang sedang login berdasarkan Token.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profil user ditemukan
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     role:
+ *                       type: object
+ *                       properties:
+ *                         name:
+ *                           type: string
+ *                           example: admin
+ *                         permissions:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *       401:
+ *         description: Token tidak valid / Belum login
+ */
+router.get(
+  '/me',
+  authenticate, // Wajib login
+  (req: Request, res: Response, next: NextFunction) => AuthController.getMe(req, res, next)
+);
+
+
+/**
+ * @openapi
+ * /api/auth/refresh-token:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Refresh Access Token
+ *     description: Menghasilkan access token baru menggunakan refresh token yang valid.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     responses:
+ *       200:
+ *         description: Access token berhasil diperbarui
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     accessToken:
+ *                       type: string
+ *                     refreshToken:
+ *                       type: string
+ *       400:
+ *         description: Refresh token tidak valid
+ *       401:
+ *         description: Refresh token expired atau tidak sah
+ */
 
 router.post('/refresh-token', validate(refreshTokenSchema), AuthController.refreshToken);
 
