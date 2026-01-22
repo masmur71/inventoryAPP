@@ -11,6 +11,7 @@ export const PERMISSIONS = {
   ORDER: {
     VIEW: 'order.view',
     CREATE: 'order.create',
+    MANAGE: 'order.manage',
   },
 
   ALL: 'all' 
